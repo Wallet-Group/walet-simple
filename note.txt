@@ -1,0 +1,9 @@
+/**
+Thiếu
+
+user có thể nạp điểm bằng cách nạp tiền
+admin có thể nạp điểm cho ví tổng
+ví tổng : 10000
+
+user a nạp 10ngan lấy 10 điểm(transaction tu vi tong sang ví user a)
+*/
