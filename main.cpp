@@ -344,7 +344,7 @@ void showMenu(bool isManager) {
   }
   cout << "0. Dang xuat\n";
 }
-
+// Hùng
 void viewPersonalInfo(Database &db, const string &username) {
   User *u = db.getUser(username);
   if (!u)
