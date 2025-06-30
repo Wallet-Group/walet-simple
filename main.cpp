@@ -346,6 +346,25 @@ void showMenu(bool isManager) {
 }
 
 // Thủy
+void changePassword(Database &db, const string &username) {
+  string oldPass, newPass, newPass2;
+  cout << "Nhap mat khau cu: ";
+  cin >> oldPass;
+  if (!db.checkPassword(username, simpleHash(oldPass))) {
+    cout << "Mat khau cu sai.\n";
+    return;
+  }
+  cout << "Nhap mat khau moi: ";
+  cin >> newPass;
+  cout << "Nhap lai mat khau moi: ";
+  cin >> newPass2;
+  if (newPass != newPass2) {
+    cout << "Mat khau moi khong khop.\n";
+    return;
+  }
+  db.updatePassword(username, simpleHash(newPass), false);
+  cout << "Doi mat khau thanh cong.\n";
+}
 
 // Hùng
 
@@ -418,6 +437,29 @@ struct StateManagement {
 };
 
 // -- Thủy làm: login
+bool do_login(StateManagement &state, Database &db, string username,
+              string password) {
+  cout << "Nhap username: ";
+  cin >> username;
+  cout << "Nhap mat khau: ";
+  cin >> password;
+  if (db.checkPassword(username, simpleHash(password))) {
+    state.isLoggedIn = true;
+    state.currentUser = db.getUser(username);
+    cout << "Dang nhap thanh cong!\n";
+    //
+    if (state.currentUser->isPasswordAutoGen) {
+      cout << "Mat khau hien tai la mat khau tu sinh. Vui long doi mat "
+              "khau ngay.\n";
+      changePassword(db, username);
+      state.currentUser->isPasswordAutoGen = false;
+      db.save();
+    }
+    return true;
+  }
+  cout << "Dang nhap that bai. Thu lai.\n";
+  return false;
+}
 
 int main() {
   srand(time(nullptr));
@@ -434,7 +476,12 @@ int main() {
 
   // -- Thủy làm: login
   
-
+while (loginAttempts < 3 && !state.isLoggedIn) {
+    while (do_login(state, db, username, password) == false) {
+      loginAttempts++;
+    }
+  }
+  
   if (!state.isLoggedIn) {
     cout << "Dang nhap that bai qua nhieu lan. Thoat chuong trinh.\n";
     return 0;
@@ -449,10 +496,13 @@ int main() {
     switch (choice) {
       
     case 1:
-      // Thủy làm
+      // Hùng làm
+      
       break;
     case 2:
       // Thủy làm
+      changePassword(db, username);
+      
       break;
     case 3:
       // Win làm
