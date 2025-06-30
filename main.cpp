@@ -22,7 +22,7 @@ string getCurrentTime() {
   return string(buf);
 }
 
-// H�m hash don gian
+// H m hash don gian
 string simpleHash(const string &input) {
   hash<string> hasher;
   size_t hashed = hasher(input);
@@ -44,7 +44,7 @@ string generatePassword(int length = 6) {
 string generateOTP(int length = 6) { return generatePassword(length); }
 
 // ---------------------
-// Class quan l� t�i khoan nguoi d�ng
+// Class quan l  t i khoan nguoi d ng
 
 enum class UserRole { NormalUser = 0, Manager = 1 };
 
@@ -56,7 +56,7 @@ struct User {
   bool isPasswordAutoGen;
   UserRole role;
 
-  // Serialize ra d�ng file: d�ng dau | ph�n c�ch
+  // Serialize ra d ng file: d ng dau | ph n c ch
   string serialize() const {
     return username + "|" + passwordHash + "|" + fullName + "|" + phone + "|" +
            (isPasswordAutoGen ? "1" : "0") + "|" +
@@ -80,7 +80,7 @@ struct User {
 };
 
 // ---------------------
-// Class v� diem
+// Class v  diem
 
 struct Transaction {
   string fromWallet;
@@ -307,7 +307,7 @@ public:
 };
 
 // ---------------------
-// OTP x�c nhan (m� luu tam thoi tr�n bo nho)
+// OTP x c nhan (m  luu tam thoi tr n bo nho)
 
 class OTPService {
 private:
@@ -330,7 +330,7 @@ public:
   }
 };
 // ---------------------
-// C�c chuc nang ch�nh
+// C c chuc nang ch nh
 
 void showMenu(bool isManager) {
   cout << "\n--- MENU ---\n";
@@ -343,6 +343,19 @@ void showMenu(bool isManager) {
     cout << "6. Dieu chinh thong tin nguoi dung\n";
   }
   cout << "0. Dang xuat\n";
+}
+// Hùng
+void viewPersonalInfo(Database &db, const string &username) {
+  User *u = db.getUser(username);
+  if (!u)
+    return;
+  cout << "Username: " << u->username << "\n";
+  cout << "Ho ten: " << u->fullName << "\n";
+  cout << "Dien thoai: " << u->phone << "\n";
+  cout << "Mat khau tu sinh: " << (u->isPasswordAutoGen ? "Co" : "Khong")
+       << "\n";
+  cout << "Vai tro: "
+       << (u->role == UserRole::Manager ? "Quan ly" : "Nguoi dung") << "\n";
 }
 
 // Thủy
@@ -367,8 +380,45 @@ void changePassword(Database &db, const string &username) {
 }
 
 // Hùng
+void createAccount(Database &db) {
+  string username, fullName, phone;
+  int roleInput;
+  bool autoGenPassword;
+  cout << "Nhap username (khong duoc sua sau): ";
+  cin >> username;
+  if (db.userExists(username)) {
+    cout << "Tai khoan da ton tai.\n";
+    return;
+  }
+  cout << "Nhap ho ten: ";
+  cin.ignore();
+  getline(cin, fullName);
+  cout << "Nhap so dien thoai: ";
+  getline(cin, phone);
+  cout << "Chon vai tro (0 - nguoi dung, 1 - quan ly): ";
+  cin >> roleInput;
 
+  cout << "Co sinh mat khau tu dong? (1: Co, 0: Khong): ";
+  cin >> autoGenPassword;
 
+  string password;
+  if (autoGenPassword) {
+    password = generatePassword();
+    cout << "Mat khau sinh tu dong la: " << password << "\n";
+  } else {
+    cout << "Nhap mat khau: ";
+    cin >> password;
+  }
+  User u{username,
+         simpleHash(password),
+         fullName,
+         phone,
+         autoGenPassword,
+         (roleInput == 1) ? UserRole::Manager : UserRole::NormalUser};
+  db.addUser(u, 0);
+  db.save();
+  cout << "Tao tai khoan thanh cong.\n";
+}
 
 void transferPoints(Database &db, OTPService &otpService,
                     const string &username) {
@@ -425,7 +475,7 @@ void viewWallet(Database &db, const string &username) {
 }
 
 // ---------------------
-// Chuong tr�nh ch�nh
+// Chuong tr nh ch nh
 
 struct StateManagement {
   bool isLoggedIn;
@@ -475,13 +525,13 @@ int main() {
   int loginAttempts = 0;
 
   // -- Thủy làm: login
-  
-while (loginAttempts < 3 && !state.isLoggedIn) {
+
+  while (loginAttempts < 3 && !state.isLoggedIn) {
     while (do_login(state, db, username, password) == false) {
       loginAttempts++;
     }
   }
-  
+
   if (!state.isLoggedIn) {
     cout << "Dang nhap that bai qua nhieu lan. Thoat chuong trinh.\n";
     return 0;
@@ -494,15 +544,15 @@ while (loginAttempts < 3 && !state.isLoggedIn) {
     cin >> choice;
 
     switch (choice) {
-      
+
     case 1:
       // Hùng làm
-      
+      viewPersonalInfo(db, username);
       break;
     case 2:
       // Thủy làm
       changePassword(db, username);
-      
+
       break;
     case 3:
       // Win làm
@@ -514,11 +564,19 @@ while (loginAttempts < 3 && !state.isLoggedIn) {
       break;
     case 5:
       // Hùng
-      
+      if (state.currentUser->role == UserRole::Manager) {
+        createAccount(db);
+      } else {
+        cout << "Khong co quyen truy cap.\n";
+      }
       break;
     case 6:
       // Hùng
-    
+      if (state.currentUser->role == UserRole::NormalUser) {
+        editUserInfo(db, otpService, username, true);
+      } else {
+        cout << "Khong co quyen truy cap.\n";
+      }
       break;
     case 0:
       cout << "Dang xuat...\n";
