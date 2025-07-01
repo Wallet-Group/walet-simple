@@ -1,0 +1,2 @@
+admin|user1|100|2025-06-09 14:10:00|1|Nap diem cho user1
+user1|user2|50|2025-06-09 14:30:00|1|Tang diem cho user2
