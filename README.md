@@ -7,6 +7,7 @@ Hệ thống được viết bằng C++ thuần (không dùng thư viện ngoài
 - Xác thực hai lớp qua OTP khi giao dịch và chỉnh sửa thông tin
 - Quản lý ví điểm thưởng (nạp, chuyển điểm)
 - Lịch sử giao dịch minh bạch
+- s
 
 ##  Thành viên và phân công
 | Họ tên           | MSSV | Vai trò           | Công việc được giao                    |
