@@ -2,18 +2,18 @@
 #  Hệ thống đăng nhập, OTP và ví điểm thưởng – Dự án C++
 
 ##  Giới thiệu dự án
-Hệ thống được viết bằng C++ thuần (không dùng thư viện ngoài), mô phỏng chức năng:
+Hệ thống được viết bằng C++, mô phỏng chức năng:
 - Đăng ký / Đăng nhập tài khoản
 - Xác thực hai lớp qua OTP khi giao dịch và chỉnh sửa thông tin
 - Quản lý ví điểm thưởng (nạp, chuyển điểm)
 - Lịch sử giao dịch minh bạch
-- s
+
 
 ##  Thành viên và phân công
-| Họ tên           | MSSV | Vai trò           | Công việc được giao                    |
-|----------------  |---------|-------------------|----------------------------------------|
-| Nguyễn Cao Sơn   | K24DTCN418 | Trưởng nhóm       | - Thiết kế kiến trúc hệ thống, xử lý OTP |
-| Trần Quốc Dũng   | K24DTCN657 | Thành viên        | Xử lý ví điểm và lịch sử giao dịch     |
+| Họ tên           | MSSV       | Vai trò            | Công việc được giao                    |
+|----------------  |---------   |------------------- |----------------------------------------|
+| Nguyễn Cao Sơn   | K24DTCN418 | Trưởng nhóm        | - Thiết kế kiến trúc hệ thống, xử lý OTP |
+| Trần Quốc Dũng   | K24DTCN657 | Thành viên         | - Xử lý ví điểm và lịch sử giao dịch     |
 | Vũ Thị Thuỷ      | B24DTCN497 | Thành viên         | - Đăng nhập, đăng xuất. Đổi password cho user   |
 | Nguyễn Đình Hùng | K24DTCN397 | Thành viên         | - Xem thông tin user. Admin tạo account cho user. Chỉnh sửa thông tin user  |
 
@@ -31,9 +31,9 @@ Hệ thống được viết bằng C++ thuần (không dùng thư viện ngoài
 - Cập nhật tài khoản hộ người dùng (cần OTP từ chủ tài khoản)
 
 ##  Cách tải và biên dịch chương trình
-1. Mở Dev-C++ hoặc Code::Blocks
-2. Tạo Project mới
-3. Dán nội dung file `main.cpp` vào
+1. Mở Dev-C++ hoặc VS Code
+2. Pull code từ repo github đã được cung cấp
+3. Run file `main.cpp` 
 4. Biên dịch (`Ctrl+F9`) và chạy (`F10`)
 
 Yêu cầu: C++11 trở lên
