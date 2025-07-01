@@ -455,6 +455,92 @@ void transferPoints(Database &db, OTPService &otpService,
   }
 }
 
+
+void editUserInfo(Database &db, OTPService &otpService, const string &username,
+                  bool isManager) {
+  string targetUser;
+  if (isManager) {
+    cout << "Nhap username cua nguoi dung muon chinh sua: ";
+    cin >> targetUser;
+    if (!db.userExists(targetUser)) {
+      cout << "Nguoi dung khong ton tai.\n";
+      return;
+    }
+  } else {
+    targetUser = username;
+  }
+  User *u = db.getUser(targetUser);
+  if (!u)
+    return;
+
+  cout << "Thong tin hien tai:\n";
+  cout << "Ho ten: " << u->fullName << "\n";
+  cout << "Dien thoai: " << u->phone << "\n";
+
+  cout << "Nhap ho ten moi (de trong de giu nguyen): ";
+  cin.ignore();
+  string newName;
+  getline(cin, newName);
+  if (newName.empty())
+    newName = u->fullName;
+
+  cout << "Nhap so dien thoai moi (de trong de giu nguyen): ";
+  string newPhone;
+  getline(cin, newPhone);
+  if (newPhone.empty())
+    newPhone = u->phone;
+
+  // Gui OTP
+  string otp = otpService.createOTP(targetUser);
+  cout << "Ma OTP da gui toi nguoi dung (gi? l?p): " << otp << "\n";
+  cout << "Thong bao thay doi: Ho ten va so dien thoai.\n";
+  cout << "Nhap ma OTP de xac nhan thay doi: ";
+  string otpInput;
+  getline(cin, otpInput);
+  if (!otpService.verifyOTP(targetUser, otpInput)) {
+    cout << "Ma OTP khong dung. Huy thao tac.\n";
+    return;
+  }
+  db.updateUserInfo(targetUser, newName, newPhone);
+  db.save();
+  cout << "Cap nhat thong tin thanh cong.\n";
+}
+
+void transferPoints(Database &db, OTPService &otpService,
+                    const string &username) {
+  string toUser;
+  int amount;
+  cout << "Nhap username nguoi nhan diem: ";
+  cin >> toUser;
+  cout << "Nhap so diem can chuyen: ";
+  cin >> amount;
+
+  if (toUser == username) {
+    cout << "Khong the chuyen diem cho chinh ban than.\n";
+    return;
+  }
+
+  // Tao OTP
+  string otp = otpService.createOTP(username);
+  cout << "Ma OTP da gui toi ban (gi? l?p): " << otp << "\n";
+  cout << "Nhap ma OTP de xac nhan giao dich: ";
+  string otpInput;
+  cin.ignore();
+  getline(cin, otpInput);
+  if (!otpService.verifyOTP(username, otpInput)) {
+    cout << "Ma OTP khong dung. Huy giao dich.\n";
+    return;
+  }
+
+  string errMsg;
+  if (db.transferPoints(username, toUser, amount, errMsg)) {
+    db.save();
+    cout << "Chuyen diem thanh cong.\n";
+  } else {
+    cout << "Chuyen diem that bai: " << errMsg << "\n";
+  }
+}
+
 void viewWallet(Database &db, const string &username) {
   int balance = db.getBalance(username);
   cout << "So diem hien tai: " << balance << "\n";
