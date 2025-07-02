@@ -44,7 +44,7 @@ string generatePassword(int length = 6) {
 string generateOTP(int length = 6) { return generatePassword(length); }
 
 // ---------------------
-// Class quan l  t i khoan nguoi d ng
+// Class quan ly  tai khoan nguoi dung
 
 enum class UserRole { NormalUser = 0, Manager = 1 };
 
@@ -56,7 +56,7 @@ struct User {
   bool isPasswordAutoGen;
   UserRole role;
 
-  // Serialize ra d ng file: d ng dau | ph n c ch
+  // Serialize ra dong file: dung dau | phan cach
   string serialize() const {
     return username + "|" + passwordHash + "|" + fullName + "|" + phone + "|" +
            (isPasswordAutoGen ? "1" : "0") + "|" +
@@ -80,7 +80,7 @@ struct User {
 };
 
 // ---------------------
-// Class v  diem
+// Class chuyen  diem
 
 struct Transaction {
   string fromWallet;
@@ -306,31 +306,78 @@ public:
   }
 };
 
-// ---------------------
-// OTP x c nhan (m  luu tam thoi tr n bo nho)
+// Cls tao OTP
+
+struct OTP {
+    std::string code;         // Ma OTP 6 so
+    std::time_t createdTime;  // Thoi diem tao ma OTP
+};
 
 class OTPService {
 private:
-  unordered_map<string, string> otpStorage; // username -> OTP
-public:
-  string createOTP(const string &username) {
-    string otp = generateOTP();
-    otpStorage[username] = otp;
-    return otp;
-  }
+    std::unordered_map<std::string, OTP> otpStorage;
 
-  bool verifyOTP(const string &username, const string &otp) {
-    if (otpStorage.find(username) == otpStorage.end())
-      return false;
-    if (otpStorage[username] == otp) {
-      otpStorage.erase(username);
-      return true;
+    // Ham tao OTP 6 so
+    std::string generateOTP() {
+        std::string otp;
+        for (int i = 0; i < 6; ++i) {
+            otp += std::to_string(rand() % 10); // so tu 0 den 9
+        }
+        return otp;
     }
-    return false;
-  }
+
+public:
+    // Tao hoac tra lai OTP neu con hieu luc
+    std::string createOTP(const std::string& username) {
+        std::time_t now = std::time(nullptr);
+
+        // Neu user da co OTP va con hieu luc thi tra ve ma cu
+        if (otpStorage.find(username) != otpStorage.end()) {
+            OTP existing = otpStorage[username];
+            if (difftime(now, existing.createdTime) <= 60) {
+                return existing.code;
+            }
+        }
+
+        // Neu chua co haoc het han thi tao OTP moi
+        OTP newOtp;
+        newOtp.code = generateOTP();
+        newOtp.createdTime = now;
+
+        otpStorage[username] = newOtp;
+
+        std::cout << "Ma OTP cua ban la: " << newOtp.code << " (co hieu luc trong 60s)\n";
+        return newOtp.code;
+    }
+
+    // Xac minh OTP nhap vao
+    bool verifyOTP(const std::string& username, const std::string& otp) {
+        if (otpStorage.find(username) == otpStorage.end()) {
+            return false; // Khong có OTP cho user nay
+        }
+
+        OTP storedOtp = otpStorage[username];
+        std::time_t now = std::time(nullptr);
+
+        // Het han OTP
+        if (difftime(now, storedOtp.createdTime) > 60) {
+            std::cout << "OTP da het han. Vui long tao lai ma OTP moi.\n";
+            otpStorage.erase(username);
+            return false;
+        }
+
+        // ỎTP đung => xac thuc thanh cong
+        if (storedOtp.code == otp) {
+            otpStorage.erase(username); // Xoa sau khi su dung
+            return true;
+        }
+
+        return false; // OTP sai
+    }
 };
+
 // ---------------------
-// C c chuc nang ch nh
+// Cac chuc nang chinh
 
 void showMenu(bool isManager) {
   cout << "\n--- MENU ---\n";
@@ -506,19 +553,6 @@ void editUserInfo(Database &db, OTPService &otpService, const string &username,
   cout << "Cap nhat thong tin thanh cong.\n";
 }
 
-void transferPoints(Database &db, OTPService &otpService,
-                    const string &username) {
-  string toUser;
-  int amount;
-  cout << "Nhap username nguoi nhan diem: ";
-  cin >> toUser;
-  cout << "Nhap so diem can chuyen: ";
-  cin >> amount;
-
-  if (toUser == username) {
-    cout << "Khong the chuyen diem cho chinh ban than.\n";
-    return;
-  }
 
   // Tao OTP
   string otp = otpService.createOTP(username);
@@ -561,7 +595,7 @@ void viewWallet(Database &db, const string &username) {
 }
 
 // ---------------------
-// Chuong tr nh ch nh
+// Chuong trinh chinh
 
 struct StateManagement {
   bool isLoggedIn;
