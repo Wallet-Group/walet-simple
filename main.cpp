@@ -9,9 +9,11 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <filesystem>
 #include "Config.h"
 
 using namespace std;
+namespace fs = filesystem;
 
 // ---------------------
 // Utils
@@ -197,9 +199,8 @@ public:
 class Database
 {
 private:
-  unordered_map<string, User> users; // key=username
-  unordered_map<string, pair<string, int>>
-      wallets; // key=username, value=balance
+  unordered_map<string, User> users;                // key=username
+  unordered_map<string, pair<string, int>> wallets; // key=username, value=balance
   vector<Transaction> transactions;
   SumWallet sumWalletConfig; // Chỉ sử dụng nếu cần
   OTPService *otpServiceInject;
@@ -208,8 +209,35 @@ private:
   const string walletFile = path + "/wallet.txt";
   const string transactionFile = path + "/transactions.txt";
   const string sumWalletFile = path + "/sumWallet.txt";
+  const string superWalletName = "superWalletAdmin_12312412";
 
 public:
+  unordered_map<string, string> getWalletAddresses() // address => username
+  {
+    unordered_map<string, string> mp;
+    for (auto it = wallets.begin(); it != wallets.end(); it++)
+    {
+      mp[it->second.first] = it->first;
+    }
+    mp[sumWalletConfig.getAddress()] = superWalletName;
+    return mp;
+  }
+  string getUserNameFromAddress(string address, unordered_map<string, string> mp)
+  {
+    if (address == sumWalletConfig.getAddress())
+      return superWalletName;
+    if (mp.find(address) != mp.end())
+      return mp[address];
+    return "";
+  }
+
+  string getAddressFromUserName(string username)
+  {
+    if (wallets.find(username) == wallets.end())
+      return "";
+    return wallets[username].first;
+  }
+
   Database()
   {
     otpServiceInject = nullptr;
@@ -273,7 +301,7 @@ public:
       transactions.push_back(Transaction::deserialize(line));
       cout << line << endl;
     }
-    cout << "-- Load Transactions --" << endl;
+    cout << "-- End Transactions --" << endl;
     fin.close();
 
     // load sum wallet
@@ -296,7 +324,7 @@ public:
   void save()
   {
     // Backup truoc khi luu
-    backupFiles();
+    // backupFiles();
 
     // Save users
     ofstream fout(userFile, ios::trunc);
@@ -333,14 +361,22 @@ public:
 
   void backupFiles()
   {
-    string backupDir = "backup/";
-    system("mkdir -p backup");
+    string backupDir = path + "/backup/";
+
+    string commandDelete = "rm -rf " + backupDir;
+    system(commandDelete.data());
+
+    string command = "mkdir -p " + backupDir;
+    // const char* cmd = command.data();
+    system(command.data());
 
     auto backupFile = [&](const string &filename)
     {
-      string cmd = "cp " + filename + " " + backupDir + filename + "." +
-                   to_string(time(nullptr));
-      system(cmd.c_str());
+      // string cmd = "cp " + filename + " " + backupDir + filename + "." +
+      //              to_string(time(nullptr));
+      // system(cmd.c_str());
+
+      fs::copy_file(filename, backupDir + filename + "." + to_string(time(nullptr)));
     };
 
     backupFile(userFile);
@@ -457,6 +493,7 @@ public:
       if (!otpServiceInject->verifyOTP(fromUser, otpInput))
       {
         cout << "Ma OTP khong dung. Huy giao dich.\n";
+        continue;
       }
       break;
     }
@@ -472,17 +509,6 @@ public:
     t.time = getCurrentTime();
     t.success = true;
     t.note = "Chuyen diem thanh cong";
-    string randomOtp = generateOTP();
-    string inputOtp;
-
-    while (cin >> inputOtp)
-    {
-      if (inputOtp != randomOtp)
-      {
-        cout << "Ma OTP khong dung. Vui long nhap lai: ";
-      }
-      break;
-    }
     addTransaction(t);
 
     return true;
@@ -506,12 +532,17 @@ public:
     t.note = "Chuyen diem thanh cong";
 
     string randomOtp = otpService.createOTP(username);
-    string inputOtp;
-    cin >> inputOtp;
-    while (!otpService.verifyOTP(username, inputOtp))
+    cout << "Mã OTP của bạn là: " << randomOtp << endl;
+    string inputOtp = "";
+    cout << "Nhap ma OTP de xac nhan giao dich: ";
+    while (cin >> inputOtp)
     {
-      cout << "Ma OTP khong dung. Vui long nhap lai: ";
-      cin >> inputOtp;
+      if (inputOtp == "" || !otpService.verifyOTP(username, inputOtp))
+      {
+        cout << "Ma OTP khong dung. Vui long nhap lai: ";
+        continue;
+      }
+      break;
     }
     addTransaction(t);
     setBalance(username, getBalance(username) + amount);
@@ -534,9 +565,10 @@ void showMenu(bool isManager)
     cout << "5. Tao tai khoan moi\n";
     cout << "6. Dieu chinh thong tin nguoi dung\n";
     cout << "7. Them diem vao vi tong\n";
-    cout << "8. Nap diem vao vi\n";
   }
+  cout << "8. Nap diem vao vi\n";
   cout << "0. Dang xuat\n";
+  cout << "-1. Thoat\n";
 }
 // Hùng
 void viewPersonalInfo(Database &db, const string &username)
@@ -726,12 +758,14 @@ void transferPoints(Database &db, OTPService &otpService,
 void depositPoints(Database &db, const string &username, OTPService &otpService)
 {
   int amount;
+  cout << "Nhap diem nap phai:";
   cin >> amount;
   if (amount <= 0)
   {
     cout << "So diem nap phai > 0.\n";
     return;
   }
+  cout << endl;
   string errMsg;
   if (db.depositPoints(username, amount, errMsg, otpService))
   {
@@ -752,15 +786,17 @@ void viewHitoryTransactions(Database &db, const string &username)
 
   cout << "Lich su giao dich:\n";
   const auto &logs = db.getTransactions();
+  unordered_map<string, string> walletAddresses = db.getWalletAddresses();
+  string userAddress = db.getAddressFromUserName(username);
   for (const auto &t : logs)
   {
-    if (t.fromWallet == username || t.toWallet == username)
+    if (t.fromWallet == userAddress || t.toWallet == userAddress)
     {
       cout << "[" << t.time << "] ";
-      if (t.fromWallet == username)
-        cout << "-" << t.amount << " diem den " << t.toWallet;
+      if (t.fromWallet == userAddress)
+        cout << "-" << t.amount << " diem den " << db.getUserNameFromAddress(t.toWallet, walletAddresses);
       else
-        cout << "+" << t.amount << " diem tu " << t.fromWallet;
+        cout << "+" << t.amount << " diem tu " << db.getUserNameFromAddress(t.fromWallet, walletAddresses);
       cout << " | Thanh cong: " << (t.success ? "Co" : "Khong") << " | "
            << t.note << "\n";
     }
@@ -772,10 +808,20 @@ struct StateManagement
 {
   bool isLoggedIn;
   User *currentUser;
+  int loginAttempts;
+  int choice;
   StateManagement()
   {
+    resetState();
+    choice = -2;
+  }
+
+  void resetState()
+  {
+    choice = -1;
     isLoggedIn = false;
     currentUser = nullptr;
+    loginAttempts = 0;
   }
 };
 
@@ -821,100 +867,102 @@ int main()
 
   cout << "=== He thong dang nhap ===\n";
 
-  string username, password;
-  int loginAttempts = 0;
-
-  while (loginAttempts < 3 && !state.isLoggedIn)
+  while (state.loginAttempts < 3 && !state.isLoggedIn)
   {
-    while (do_login(state, db, username, password) == false)
+    string username, password;
+    if (do_login(state, db, username, password) == false)
     {
-      loginAttempts++;
+      state.loginAttempts++;
+      continue;
+    }
+
+    while (state.choice != -1)
+    {
+      showMenu(state.currentUser->role == UserRole::Manager);
+      cout << "Chon chuc nang: ";
+      cin >> state.choice;
+
+      switch (state.choice)
+      {
+      case 1:
+        // Hùng làm
+        viewPersonalInfo(db, state.currentUser->username);
+        break;
+      case 2:
+        // Thủy làm
+        changePassword(db, state.currentUser->username);
+        break;
+      case 3:
+        // Win làm
+        transferPoints(db, otpService, state.currentUser->username);
+        break;
+      case 4:
+        // Win làm
+        viewHitoryTransactions(db, state.currentUser->username);
+        break;
+      case 5:
+        // Hùng
+        if (state.currentUser->role == UserRole::Manager)
+        {
+          createAccount(db);
+        }
+        else
+        {
+          cout << "Khong co quyen truy cap.\n";
+        }
+        break;
+      case 6:
+        // Hùng
+        if (state.currentUser->role == UserRole::NormalUser)
+        {
+          editUserInfo(db, otpService, state.currentUser->username, true);
+        }
+        else
+        {
+          cout << "Khong co quyen truy cap.\n";
+        }
+        break;
+
+      case 7:
+        if (state.currentUser->role == UserRole::Manager)
+        {
+          int amount;
+          cout << "Nhap so tien muon nap vao vi tong: ";
+          cin >> amount;
+          if (amount <= 0)
+          {
+            cout << "So tien nap phai > 0.\n";
+            break;
+          }
+          addMoneySumWallet(db, amount);
+        }
+        else
+        {
+          cout << "Khong co quyen truy cap.\n";
+        }
+        break;
+      case 8:
+        // Win làm
+        depositPoints(db, state.currentUser->username, otpService);
+        break;
+      case 0:
+        cout << "Dang xuat...\n";
+        state.resetState();
+        break;
+      case -1:
+        cout << "Thoát chương trình...\n";
+        return 0;
+        break;
+      default:
+        cout << "Lua chon khong hop le.\n";
+      }
     }
   }
 
-  if (!state.isLoggedIn)
+  if (!state.isLoggedIn && state.loginAttempts >= 3)
   {
     cout << "Dang nhap that bai qua nhieu lan. Thoat chuong trinh.\n";
     return 0;
-  }
-
-  int choice = -1;
-  while (choice != 0)
-  {
-    showMenu(state.currentUser->role == UserRole::Manager);
-    cout << "Chon chuc nang: ";
-    cin >> choice;
-
-    switch (choice)
-    {
-
-    case 1:
-      // Hùng làm
-      viewPersonalInfo(db, state.currentUser->username);
-      break;
-    case 2:
-      // Thủy làm
-      changePassword(db, state.currentUser->username);
-      break;
-    case 3:
-      // Win làm
-      transferPoints(db, otpService, state.currentUser->username);
-      break;
-    case 4:
-      // Win làm
-      viewHitoryTransactions(db, state.currentUser->username);
-      break;
-    case 5:
-      // Hùng
-      if (state.currentUser->role == UserRole::Manager)
-      {
-        createAccount(db);
-      }
-      else
-      {
-        cout << "Khong co quyen truy cap.\n";
-      }
-      break;
-    case 6:
-      // Hùng
-      if (state.currentUser->role == UserRole::NormalUser)
-      {
-        editUserInfo(db, otpService, state.currentUser->username, true);
-      }
-      else
-      {
-        cout << "Khong co quyen truy cap.\n";
-      }
-      break;
-
-    case 7:
-      if (state.currentUser->role == UserRole::Manager)
-      {
-        int amount;
-        cout << "Nhap so tien muon nap vao vi tong: ";
-        cin >> amount;
-        if (amount <= 0)
-        {
-          cout << "So tien nap phai > 0.\n";
-          break;
-        }
-        addMoneySumWallet(db, amount);
-      }
-      else
-      {
-        cout << "Khong co quyen truy cap.\n";
-      }
-      break;
-    case 8:
-      // Win làm
-      depositPoints(db, state.currentUser->username, otpService);
-      break;
-    case 0:
-      cout << "Dang xuat...\n";
-      break;
-    default:
-      cout << "Lua chon khong hop le.\n";
-    }
   }
 
   return 0;
