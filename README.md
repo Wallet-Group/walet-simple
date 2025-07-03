@@ -42,7 +42,8 @@ Hệ thống được viết bằng C++, mô phỏng chức năng:
         ```
         cmake -S . -B build 
         cmake --build build
-        .\build\Debug\WalletSimple.exe
+        cd build\Debug
+        .\WalletSimple.exe
         ```
 
 
