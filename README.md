@@ -36,6 +36,15 @@ Hệ thống được viết bằng C++, mô phỏng chức năng:
 3. Run file `main.cpp` 
 4. Biên dịch (`Ctrl+F9`) và chạy (`F10`)
 
+- #### Có thể chạy với Cmake nếu Dev C++ không hỗ trợ c++ 11
+    - Cài đặt cmake với version từ 4.0 trở lên, mới nhất hiện nay đang là 4.1
+    - Mở terminal trong project, chạy 
+        ```
+        cmake -S . -B build 
+        cmake --build build
+        .\build\Debug\WalletSimple.exe
+        ```
+
 
 ## Cách chạy chương trình
 - Đăng nhập với tài khoản có sẵn (ví dụ: admin/123456)
