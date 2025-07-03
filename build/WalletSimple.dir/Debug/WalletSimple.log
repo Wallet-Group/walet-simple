@@ -1,5 +1,0 @@
-﻿  Building Custom Rule C:/DEV/walletCplus/walet-simple/CMakeLists.txt
-  main.cpp
-C:\DEV\walletCplus\walet-simple\main.cpp(17,13): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\DEV\walletCplus\walet-simple\main.cpp(566,13): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-  WalletSimple.vcxproj -> C:\DEV\walletCplus\walet-simple\build\Debug\WalletSimple.exe
