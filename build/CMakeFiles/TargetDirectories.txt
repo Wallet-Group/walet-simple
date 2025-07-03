@@ -1,0 +1,3 @@
+C:/DEV/walletCplus/walet-simple/build/CMakeFiles/WalletSimple.dir
+C:/DEV/walletCplus/walet-simple/build/CMakeFiles/ALL_BUILD.dir
+C:/DEV/walletCplus/walet-simple/build/CMakeFiles/ZERO_CHECK.dir
