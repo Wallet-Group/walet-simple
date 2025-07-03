@@ -30,13 +30,12 @@ Hệ thống được viết bằng C++, mô phỏng chức năng:
 - Xem danh sách người dùng
 - Cập nhật tài khoản hộ người dùng (cần OTP từ chủ tài khoản)
 
-##  Cách tải và biên dịch chương trình
+##  Cách tải và biên dịch chương trình với Dev C++
 1. Mở Dev-C++ hoặc VS Code
 2. Pull code từ repo github đã được cung cấp
 3. Run file `main.cpp` 
 4. Biên dịch (`Ctrl+F9`) và chạy (`F10`)
 
-Yêu cầu: C++11 trở lên
 
 ## Cách chạy chương trình
 - Đăng nhập với tài khoản có sẵn (ví dụ: admin/123456)
